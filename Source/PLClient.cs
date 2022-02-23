@@ -1,11 +1,12 @@
 ﻿using Microsoft.VisualBasic.FileIO;
+using PowerliftingSharp.Util;
 using PowerliftingSharp.Types;
-using System.Text;
 using System.Globalization;
+using System.Text.Json;
 
-namespace PowerliftingSharp.WebClient
+namespace PowerliftingSharp
 {
-    public class PLClient : IPLClient, IDisposable
+    public class PLClient : IDisposable
     {
         #region private fields
         private bool _disposed = false;
@@ -20,7 +21,7 @@ namespace PowerliftingSharp.WebClient
         public async Task<Lifter?> GetLifterByIdentifierAsync(string identifier)
         {
             if (_disposed)
-                throw new ObjectDisposedException(nameof(_httpClient));
+                throw new ObjectDisposedException(nameof(PLClient));
 
             string csvUrl = GetLifterCsvUrl(identifier);
 
@@ -31,24 +32,56 @@ namespace PowerliftingSharp.WebClient
 
             await using Stream responseStream = await response.Content.ReadAsStreamAsync();
 
-            using TextFieldParser parser = new(responseStream);
-            parser.TextFieldType = FieldType.Delimited;
-            parser.SetDelimiters(",");
-            parser.ReadLine(); // skip first line
+            using CsvLineParser parser = new(responseStream);
 
-            List<string[]> fieldRows = new();
-            while (!parser.EndOfData)
-                fieldRows.Add(parser.ReadFields());
+            var rows = parser.EnumerateRows().Skip(1).ToList(); // first line is formatting
 
-            if (fieldRows.Count is 0)
+            if (rows.Empty())
                 return null;
 
-            return FromFieldRows(fieldRows, identifier);
+            if (rows.Any(row => row is null))
+                throw new DeserializeException("Internal error; could not deserialize .csv-data");
+
+            return FromFieldRows((IEnumerable<string[]>)rows, identifier);
         }
 
-        public Task<string?> GetLifterIdentifier(string fullName)
+        public async Task<(string FoundName, string Identifier)> QueryName(string fullName)
         {
-            throw new NotImplementedException();
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(_httpClient));
+
+            string nextIndexUrl = GetNameQueryUrl(fullName);
+
+            using HttpRequestMessage indexRequest = new(HttpMethod.Get, nextIndexUrl);
+            using HttpResponseMessage indexResponse = await _httpClient.SendAsync(indexRequest);
+            indexResponse.EnsureSuccessStatusCode();
+            using Stream indexResponseStream = await indexResponse.Content.ReadAsStreamAsync();
+
+            JsonToXmlConverter converter = new();
+            converter.ReadStream(indexResponseStream);
+            int? nextIndex = converter.GetValue<int>("next_index");
+
+            if (!nextIndex.HasValue)
+                throw new DeserializeException("Could not deserialize json; OpenPowerliftingAPI probably has changed");
+
+            string entryQueryUrl = GetEntryQueryUrl(nextIndex.Value);
+
+            using HttpRequestMessage entryRequest = new(HttpMethod.Get, entryQueryUrl);
+            using HttpResponseMessage entryResponse = await _httpClient.SendAsync(entryRequest);
+            entryResponse.EnsureSuccessStatusCode();
+            using Stream entryResponseStream = await entryResponse.Content.ReadAsStreamAsync();
+
+            converter.ReadStream(entryResponseStream);
+
+            var items = converter["rows"]?.Element("item")?.Elements("item");
+
+            if (items is null)
+                throw new DeserializeException("Could not deserialize json; OpenPowerliftingAPI probably has changed");
+
+            string lifterName = items.ElementAt(2).Value;
+            string identifier = items.ElementAt(3).Value;
+
+            return (lifterName, identifier);
         }
 
         #region IDisposable
@@ -88,11 +121,21 @@ namespace PowerliftingSharp.WebClient
             return $"https://www.openpowerlifting.org/u/{lifterId}/csv";
         }
 
-        private static Lifter FromFieldRows(List<string[]> fieldRows, string lifterIdentifier) => new()
+        private static string GetNameQueryUrl(string fullName)
         {
-            FullName = fieldRows[0][0],
+            return $"https://www.openpowerlifting.org/api/search/rankings?q={fullName}&start=0";
+        }
+
+        private static string GetEntryQueryUrl(int nextIndex)
+        {
+            return $"https://www.openpowerlifting.org/api/rankings?start={nextIndex}&end={nextIndex}&lang=en&units=kg";
+        }
+
+        private static Lifter FromFieldRows(IEnumerable<string[]> fieldRows, string lifterIdentifier) => new()
+        {
+            FullName = fieldRows.First()[0],
             Identifier = lifterIdentifier,
-            Sex = Enum.Parse<Sex>(fieldRows[0][1]),
+            Sex = Enum.Parse<Sex>(fieldRows.First()[1]),
             Meets = fieldRows.Select(fr => FromFieldRow(fr)).ToHashSet()
         };
 
@@ -125,16 +168,16 @@ namespace PowerliftingSharp.WebClient
             if (uint.TryParse(fieldRow[26], out uint rnk))
                 place = (PlaceType.Ranked, rnk);
             else
-                place = (Enum.Parse<PlaceType>(fieldRow[26]), null);
+                place = (PtFromString(fieldRow[26]), null);
 
             return new()
             {
                 Event = Enum.Parse<Event>(fieldRow[2]),
-                Equipment = Enum.Parse<Equipment>(fieldRow[3]),
+                Equipment = EqFromString(fieldRow[3]),
                 Age = string.IsNullOrEmpty(fieldRow[4]) ? null : float.Parse(fieldRow[4], NumberStyles.Float, CultureInfo.InvariantCulture),
                 AgeClass = NullWhenEmpty(fieldRow[5]),
                 BirthYearClass = NullWhenEmpty(fieldRow[6]),
-                Division = FromString(fieldRow[7]),
+                Division = DivFromString(fieldRow[7]),
                 BodyweightKg = string.IsNullOrEmpty(fieldRow[8]) ? null : float.Parse(fieldRow[8], NumberStyles.Float, CultureInfo.InvariantCulture),
                 WeightClassKg = weightClass,
                 Attempts = attempts,
@@ -158,7 +201,7 @@ namespace PowerliftingSharp.WebClient
 
         private static string? NullWhenEmpty(string src) => string.IsNullOrEmpty(src) ? null : src;
 
-        private static Division? FromString(string src) => src switch
+        private static Division? DivFromString(string src) => src switch
         {
             "Sub-Juniors" => Division.SubJunior,
             "Juniors" => Division.Junior,
@@ -168,6 +211,26 @@ namespace PowerliftingSharp.WebClient
             "Masters 3" => Division.Masters3,
             "Masters 4" => Division.Masters4,
             _ => null
+        };
+
+        private static Equipment EqFromString(string src) => src switch
+        {
+            "Raw" => Equipment.Raw, 
+            "Wraps" => Equipment.Wraps, 
+            "Single-ply" => Equipment.SinglePly,
+            "Multi-ply" => Equipment.MultiPly,
+            "Unlimited" => Equipment.Unlimited,
+            "Straps" => Equipment.Straps,
+            _ => throw new NotImplementedException($"Equipment '{src}' is not implemented!")
+        };
+
+        private static PlaceType PtFromString(string src) => src switch
+        {
+            "G" => PlaceType.Guest,
+            "DQ" => PlaceType.Disqualified,
+            "DD" => PlaceType.DopingDisqualification,
+            "NS" => PlaceType.NoShow,
+            _ => throw new NotImplementedException($"Place type '{src}' is not implemented!")
         };
 
         #endregion
