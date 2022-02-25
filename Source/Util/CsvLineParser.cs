@@ -23,7 +23,7 @@ internal class CsvLineParser : IDisposable
     internal IEnumerable<string[]?> EnumerateRows()
     {
         if (_disposed)
-            throw new ObjectDisposedException(nameof(CsvLineParser));        
+            throw new ObjectDisposedException(nameof(CsvLineParser));
 
         while (!_parser.EndOfData) yield return _parser.ReadFields();
     }

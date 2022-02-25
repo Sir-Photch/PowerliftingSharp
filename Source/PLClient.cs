@@ -50,7 +50,7 @@ namespace PowerliftingSharp
             if (rows.Any(row => row is null))
                 throw new DeserializeException("Internal error; could not deserialize .csv-data");
 
-            return FromFieldRows((IEnumerable<string[]>)rows, identifier);
+            return FromFieldRows(rows, identifier);
         }
 
         /// <summary>

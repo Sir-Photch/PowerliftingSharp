@@ -1,6 +1,4 @@
-﻿using System.Linq;
-
-namespace PowerliftingSharp.Types;
+﻿namespace PowerliftingSharp.Types;
 
 public readonly struct Attempts : IEquatable<Attempts>
 {
