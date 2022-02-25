@@ -1,8 +1,6 @@
-﻿using Microsoft.VisualBasic.FileIO;
+﻿using System.Globalization;
 using PowerliftingSharp.Util;
 using PowerliftingSharp.Types;
-using System.Globalization;
-using System.Text.Json;
 
 namespace PowerliftingSharp
 {
@@ -13,11 +11,21 @@ namespace PowerliftingSharp
         private readonly HttpClient _httpClient;
         #endregion
 
+        /// <summary>
+        /// Constructs PLClient.
+        /// </summary>
         public PLClient()
         {
             _httpClient = new();
         }
 
+        /// <summary>
+        /// Queries lifter data with given <paramref name="identifier"/>. 
+        /// </summary>
+        /// <param name="identifier">Uniquie identifier of lifter</param>
+        /// <returns><see cref="Lifter"/>-data, or <c>null</c>, when lifter was not found</returns>
+        /// <exception cref="ObjectDisposedException">Instance is disposed</exception>
+        /// <exception cref="DeserializeException">An internal parse-error has occurred.</exception>
         public async Task<Lifter?> GetLifterByIdentifierAsync(string identifier)
         {
             if (_disposed)
@@ -45,6 +53,13 @@ namespace PowerliftingSharp
             return FromFieldRows((IEnumerable<string[]>)rows, identifier);
         }
 
+        /// <summary>
+        /// Queries unique lifter identifier given (parts) of lifters full name.
+        /// </summary>
+        /// <param name="fullName">Lifters full name</param>
+        /// <returns>Best match including found name and unique identifier.</returns>
+        /// <exception cref="ObjectDisposedException">Instance is disposed</exception>
+        /// <exception cref="DeserializeException">An internal parse-error has occurred.</exception>
         public async Task<(string FoundName, string Identifier)> QueryName(string fullName)
         {
             if (_disposed)
@@ -84,27 +99,15 @@ namespace PowerliftingSharp
             return (lifterName, identifier);
         }
 
-        #region IDisposable
+        /// <summary>
+        /// Disposes underlying http-client.<br/>
+        /// Successive calls to client will cause <see cref="ObjectDisposedException"/>s to be thrown.
+        /// </summary>
         public void Dispose()
         {
-            Dispose(true);
+            _httpClient?.Dispose();
             GC.SuppressFinalize(this);
         }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (_disposed) return;
-
-            if (disposing)
-            {
-                _httpClient.Dispose();
-            }
-
-            _disposed = true;
-        }
-
-        ~PLClient() => Dispose(false);
-        #endregion
 
         #region private methods
 
@@ -215,8 +218,8 @@ namespace PowerliftingSharp
 
         private static Equipment EqFromString(string src) => src switch
         {
-            "Raw" => Equipment.Raw, 
-            "Wraps" => Equipment.Wraps, 
+            "Raw" => Equipment.Raw,
+            "Wraps" => Equipment.Wraps,
             "Single-ply" => Equipment.SinglePly,
             "Multi-ply" => Equipment.MultiPly,
             "Unlimited" => Equipment.Unlimited,
