@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.1.32210.238
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PowerliftingSharp", "PowerliftingSharp.csproj", "{ADBED67D-C454-4F62-A210-6EA67552A302}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PowerliftingSharp", "PowerliftingSharp\PowerliftingSharp.csproj", "{379CDF74-B50D-4F0B-920A-4798F4435FDD}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PowerliftingSharpTests", "PowerliftingSharpTests\PowerliftingSharpTests.csproj", "{18F16A19-3224-490C-9127-A87661E85636}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,10 +13,14 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{ADBED67D-C454-4F62-A210-6EA67552A302}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{ADBED67D-C454-4F62-A210-6EA67552A302}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{ADBED67D-C454-4F62-A210-6EA67552A302}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{ADBED67D-C454-4F62-A210-6EA67552A302}.Release|Any CPU.Build.0 = Release|Any CPU
+		{379CDF74-B50D-4F0B-920A-4798F4435FDD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{379CDF74-B50D-4F0B-920A-4798F4435FDD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{379CDF74-B50D-4F0B-920A-4798F4435FDD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{379CDF74-B50D-4F0B-920A-4798F4435FDD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{18F16A19-3224-490C-9127-A87661E85636}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{18F16A19-3224-490C-9127-A87661E85636}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{18F16A19-3224-490C-9127-A87661E85636}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{18F16A19-3224-490C-9127-A87661E85636}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
