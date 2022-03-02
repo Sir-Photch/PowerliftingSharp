@@ -8,7 +8,7 @@ using PowerliftingSharp.Types;
 
 using PLClient client = new();
 
-string nameToBeFound = "Andrej Malanichev";
+string nameToBeFound = "Andrey Malanichev";
 
 (string foundName, string identifier) = await client.QueryName(nameToBeFound);
 
