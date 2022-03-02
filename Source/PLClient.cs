@@ -4,6 +4,9 @@ using PowerliftingSharp.Types;
 
 namespace PowerliftingSharp
 {
+    /// <summary>
+    /// Main client to retrieve data with
+    /// </summary>
     public class PLClient : IDisposable
     {
         #region private fields
@@ -105,8 +108,10 @@ namespace PowerliftingSharp
         /// </summary>
         public void Dispose()
         {
+            if (_disposed) return;
             _httpClient?.Dispose();
             GC.SuppressFinalize(this);
+            _disposed = true;
         }
 
         #region private methods

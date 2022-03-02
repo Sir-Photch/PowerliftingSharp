@@ -2,6 +2,9 @@
 
 namespace PowerliftingSharp.Util;
 
+/// <summary>
+/// Exception thats thrown if deserialization of API-data has failed
+/// </summary>
 public class DeserializeException : Exception
 {
     internal DeserializeException() : base() { }
