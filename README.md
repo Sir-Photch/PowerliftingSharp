@@ -1,6 +1,7 @@
 # Lightweight C# Wrapper for OpenPowerlifting API
 
 Available on nuget: https://www.nuget.org/packages/PowerliftingSharp/1.1.0
+Built with .NET 6.0
 
 ## how to get started
 
