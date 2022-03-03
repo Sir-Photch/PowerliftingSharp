@@ -1,5 +1,7 @@
 # Lightweight C# Wrapper for OpenPowerlifting API
 
+Available on nuget: https://www.nuget.org/packages/PowerliftingSharp/1.1.0
+
 ## how to get started
 
 ```csharp
@@ -10,10 +12,10 @@ using PLClient client = new();
 
 string nameToBeFound = "Andrey Malanichev";
 
-(string foundName, string identifier) = await client.QueryName(nameToBeFound);
+(string foundName, string identifier)? query = await client.QueryName(nameToBeFound);
 
-if (foundName != nameToBeFound)
-  Environment.Exit(1);
+if (query is null || query.Value.foundName != nameToBeFound)
+  return;
   
 Lifter? lifter;
 try
@@ -22,7 +24,7 @@ try
 }
 catch (Exception e)
 {
-  // API error
+  // request was not successful, or, an internal error has occurred.
 }
 ```
 
