@@ -11,44 +11,38 @@ namespace PowerliftingSharp
     {
         #region private fields
         private bool _disposed = false;
-        private readonly HttpClient _httpClient;
+        private readonly HttpClient _httpClient = new();
+        private readonly SemaphoreSlim _clientSemaphore = new(1);
         #endregion
-
-        /// <summary>
-        /// Constructs PLClient.
-        /// </summary>
-        public PLClient()
-        {
-            _httpClient = new();
-        }
 
         /// <summary>
         /// Queries lifter data with given <paramref name="identifier"/>. 
         /// </summary>
         /// <param name="identifier">Uniquie identifier of lifter</param>
-        /// <returns><see cref="Lifter"/>-data, or <c>null</c>, when lifter was not found</returns>
+        /// <param name="token">Optional token to cancel operation</param>
+        /// <returns><see cref="Athlete"/>-data</returns>
         /// <exception cref="ObjectDisposedException">Instance is disposed</exception>
         /// <exception cref="DeserializeException">An internal parse-error has occurred.</exception>
-        public async Task<Lifter?> GetLifterByIdentifierAsync(string identifier)
+        /// <exception cref="ArgumentException">Request for given <paramref name="identifier"/> was not successful</exception>
+        /// <exception cref="TaskCanceledException">Operation was canceled via <paramref name="token"/></exception>
+        public async Task<Athlete> GetAthleteByIdentifierAsync(string identifier, CancellationToken token = default)
         {
             if (_disposed)
                 throw new ObjectDisposedException(nameof(PLClient));
 
             string csvUrl = GetLifterCsvUrl(identifier);
 
-            using HttpRequestMessage request = new(HttpMethod.Get, csvUrl);
-            using HttpResponseMessage response = await _httpClient.SendAsync(request);
+            using Stream? stream = await RequestStreamAsync(csvUrl, token);
 
-            response.EnsureSuccessStatusCode();
+            if (stream is null)
+                throw new ArgumentException($"Request for {identifier} was not successful!");
 
-            await using Stream responseStream = await response.Content.ReadAsStreamAsync();
-
-            using CsvLineParser parser = new(responseStream);
+            using CsvLineParser parser = new(stream);
 
             var rows = parser.EnumerateRows().Skip(1).ToList(); // first line is formatting
 
             if (rows.Empty())
-                return null;
+                throw new ArgumentException($"Athlete {identifier} did not contain valid data.");
 
             if (rows.Any(row => row is null))
                 throw new DeserializeException("Internal error; could not deserialize .csv-data");
@@ -60,34 +54,35 @@ namespace PowerliftingSharp
         /// Queries unique lifter identifier given (parts) of lifters full name.
         /// </summary>
         /// <param name="fullName">Lifters full name</param>
-        /// <returns>Best match including found name and unique identifier.</returns>
+        /// <param name="token">Optional token to cancel operation</param>
+        /// <returns>Best match including found name and unique identifier, or <c>null</c>, when query was not successful.</returns>
         /// <exception cref="ObjectDisposedException">Instance is disposed</exception>
         /// <exception cref="DeserializeException">An internal parse-error has occurred.</exception>
-        public async Task<(string FoundName, string Identifier)> QueryName(string fullName)
+        public async Task<(string FoundName, string Identifier)?> QueryName(string fullName, CancellationToken token = default)
         {
             if (_disposed)
                 throw new ObjectDisposedException(nameof(_httpClient));
 
             string nextIndexUrl = GetNameQueryUrl(fullName);
 
-            using HttpRequestMessage indexRequest = new(HttpMethod.Get, nextIndexUrl);
-            using HttpResponseMessage indexResponse = await _httpClient.SendAsync(indexRequest);
-            indexResponse.EnsureSuccessStatusCode();
-            using Stream indexResponseStream = await indexResponse.Content.ReadAsStreamAsync();
+            using Stream? indexResponseStream = await RequestStreamAsync(nextIndexUrl, token);
+
+            if (indexResponseStream is null)
+                return null;
 
             JsonToXmlConverter converter = new();
             converter.ReadStream(indexResponseStream);
             int? nextIndex = converter.GetValue<int>("next_index");
 
             if (!nextIndex.HasValue)
-                throw new DeserializeException("Could not deserialize json; OpenPowerliftingAPI probably has changed");
+                return null;
 
             string entryQueryUrl = GetEntryQueryUrl(nextIndex.Value);
 
-            using HttpRequestMessage entryRequest = new(HttpMethod.Get, entryQueryUrl);
-            using HttpResponseMessage entryResponse = await _httpClient.SendAsync(entryRequest);
-            entryResponse.EnsureSuccessStatusCode();
-            using Stream entryResponseStream = await entryResponse.Content.ReadAsStreamAsync();
+            using Stream? entryResponseStream = await RequestStreamAsync(entryQueryUrl, token);
+
+            if (entryResponseStream is null)
+                return null;
 
             converter.ReadStream(entryResponseStream);
 
@@ -116,6 +111,22 @@ namespace PowerliftingSharp
 
         #region private methods
 
+        private async Task<Stream?> RequestStreamAsync(string url, CancellationToken token)
+        {
+            await _clientSemaphore.WaitAsync(token);
+
+            using HttpRequestMessage message = new(HttpMethod.Get, url);
+            HttpResponseMessage response = await _httpClient.SendAsync(message, token);
+
+            _clientSemaphore.Release();
+
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            return await response.Content.ReadAsStreamAsync(token);
+        }
+
+
         /* Name,Sex,Event,Equipment,Age,AgeClass,BirthYearClass,Division,BodyweightKg,WeightClassKg,
          * Squat1Kg,Squat2Kg,Squat3Kg,Squat4Kg,Best3SquatKg,
          * Bench1Kg,Bench2Kg,Bench3Kg,Bench4Kg,Best3BenchKg,
@@ -139,7 +150,7 @@ namespace PowerliftingSharp
             return $"https://www.openpowerlifting.org/api/rankings?start={nextIndex}&end={nextIndex}&lang=en&units=kg";
         }
 
-        private static Lifter FromFieldRows(IEnumerable<string[]> fieldRows, string lifterIdentifier) => new()
+        private static Athlete FromFieldRows(IEnumerable<string[]> fieldRows, string lifterIdentifier) => new()
         {
             FullName = fieldRows.First()[0],
             Identifier = lifterIdentifier,

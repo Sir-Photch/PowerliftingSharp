@@ -44,7 +44,7 @@ internal class JsonToXmlConverter
 
         string? element = _doc?.Root?.Element(xName)?.Value;
 
-        if (element is null)
+        if (string.IsNullOrWhiteSpace(element))
             return null;
 
         return (T?)Convert.ChangeType(element, typeof(T));

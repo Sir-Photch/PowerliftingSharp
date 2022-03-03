@@ -27,6 +27,11 @@ public readonly struct Meet : IEquatable<Meet>
     public string? MeetTown { get; internal init; }
     public string MeetName { get; internal init; }
 
+    public override string ToString()
+    {
+        return $"{Federation}: {MeetName}, {Date:y}, Place: {(Place.Rank?.ToString() ?? Place.Type.ToString())}";
+    }
+
     #region ops
     public override bool Equals(object? obj)
     {
