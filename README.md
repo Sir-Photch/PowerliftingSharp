@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="PowerliftingSharp.png" alt="PowerliftingSharp" width=200 class="center"/>
+</p>
+
 # Lightweight! C# Wrapper for OpenPowerlifting API
 
 Available on [nuget](https://www.nuget.org/packages/PowerliftingSharp/1.1.0).
