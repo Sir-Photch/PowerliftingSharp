@@ -10,8 +10,8 @@
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 		<PackageTags>powerlifting sport</PackageTags>
 
-		<PackageVersion>1.0</PackageVersion>
-		<PackageReleaseNotes>Initial package release!</PackageReleaseNotes>		
+		<PackageVersion>1.1</PackageVersion>
+		<PackageReleaseNotes>Tested version</PackageReleaseNotes>		
 
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
