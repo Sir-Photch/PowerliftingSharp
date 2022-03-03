@@ -1,6 +1,7 @@
-# Lightweight C# Wrapper for OpenPowerlifting API
+# Lightweight! C# Wrapper for OpenPowerlifting API
 
-Available on nuget: https://www.nuget.org/packages/PowerliftingSharp/1.1.0
+Available on [nuget](https://www.nuget.org/packages/PowerliftingSharp/1.1.0).
+Built with .NET 6.0
 
 ## how to get started
 
@@ -20,7 +21,7 @@ if (query is null || query.Value.foundName != nameToBeFound)
 Lifter? lifter;
 try
 {
-  lifter = await client.GetLifterByIdentifierAsync(identifier);
+  lifter = await client.GetLifterByIdentifierAsync(query.Value.identifier);
 }
 catch (Exception e)
 {
@@ -28,4 +29,4 @@ catch (Exception e)
 }
 ```
 
-For reference, see https://gitlab.com/openpowerlifting/opl-data / https://www.openpowerlifting.org/
+For reference, see [OPL data service](https://openpowerlifting.gitlab.io/opl-csv/) and the official [Gitlab repo](https://gitlab.com/openpowerlifting/opl-data).
