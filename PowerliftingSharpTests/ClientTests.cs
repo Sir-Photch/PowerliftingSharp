@@ -43,7 +43,7 @@ public class ClientTests
 
             string randomString = Encoding.Unicode.GetString(bytes);
 
-            Assert.IsTrue(await _client.QueryName(randomString) is null);
+            Assert.IsNull(await _client.QueryName(randomString));
         });
     }
 
