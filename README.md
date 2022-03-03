@@ -20,7 +20,7 @@ if (query is null || query.Value.foundName != nameToBeFound)
 Lifter? lifter;
 try
 {
-  lifter = await client.GetLifterByIdentifierAsync(identifier);
+  lifter = await client.GetLifterByIdentifierAsync(query.Value.identifier);
 }
 catch (Exception e)
 {
