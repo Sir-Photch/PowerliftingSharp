@@ -9,9 +9,10 @@
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 		<PackageTags>powerlifting sport</PackageTags>
+		<PackageIcon>PowerliftingSharp.png</PackageIcon>
 
-		<PackageVersion>1.1</PackageVersion>
-		<PackageReleaseNotes>Tested version</PackageReleaseNotes>		
+		<PackageVersion>1.1.1</PackageVersion>
+		<PackageReleaseNotes>Added package icon</PackageReleaseNotes>		
 
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -25,6 +26,7 @@
 	<ItemGroup>
 		<None Include="..\LICENSE" Pack="true" PackagePath=""/>
 		<None Include="..\README.md" Pack="true" PackagePath=""/>
+		<None Include="..\PowerliftingSharp.png" Pack="true" PackagePath=""/>
 	</ItemGroup>
 
 </Project>
