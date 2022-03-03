@@ -25,10 +25,10 @@ string nameToBeFound = "Andrey Malanichev";
 if (query is null || query.Value.foundName != nameToBeFound)
   return;
   
-Lifter? lifter;
+Athlete? andrey;
 try
 {
-  lifter = await client.GetLifterByIdentifierAsync(query.Value.identifier);
+  andrey = await client.GetAthleteByIdentifierAsync(query.Value.identifier);
 }
 catch (Exception e)
 {
