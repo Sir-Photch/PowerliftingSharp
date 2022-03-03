@@ -8,7 +8,7 @@ Built with .NET 6.0 and available on [nuget](https://www.nuget.org/packages/Powe
 
 
 Currently, querying unique identifiers of athletes and returning their recorded data is supported.
-Feel free to fork this repo or open an issue if you feel like something is missing!
+Feel free to fork this repo or open an issue if you miss a feature!
 
 ## How to get started
 
