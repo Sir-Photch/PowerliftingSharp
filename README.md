@@ -4,7 +4,7 @@
 
 # Lightweight! C# Wrapper for OpenPowerlifting API
 
-Built with .NET 6.0 and available on [nuget](https://www.nuget.org/packages/PowerliftingSharp/1.1.0)
+Built with .NET 6.0 and available on [nuget](https://www.nuget.org/packages/PowerliftingSharp/)
 
 
 Currently, querying unique identifiers of athletes and returning their recorded data is supported.
